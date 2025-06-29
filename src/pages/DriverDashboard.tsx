@@ -9,7 +9,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, onSnapshot, updateDoc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, collection, addDoc } from 'firebase/firestore';
 
 const DEFAULT_CENTER = { lat: 10.158316, lng: 76.178494 };
 
@@ -47,11 +47,12 @@ const DriverDashboard = () => {
   const [showLocationWarning, setShowLocationWarning] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
 
+  const userType = localStorage.getItem('userType');
+  const storedUserInfo = localStorage.getItem('userInfo');
+  const storedRoute = localStorage.getItem('currentRoute');
+
   // Auth & route load
   useEffect(() => {
-    const userType = localStorage.getItem('userType');
-    const storedUserInfo = localStorage.getItem('userInfo');
-    const storedRoute = localStorage.getItem('currentRoute');
     if (!userType || userType !== 'driver' || !storedUserInfo || !storedRoute) {
       navigate('/login');
       return;
@@ -60,7 +61,7 @@ const DriverDashboard = () => {
     setCurrentRoute(JSON.parse(storedRoute));
   }, [navigate]);
 
-  // Listen for live bus location from Firebase
+  // Listen for live bus location from Firestore
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "buses", "bus_1"), (docSnap) => {
       const data = docSnap.data();
@@ -71,7 +72,7 @@ const DriverDashboard = () => {
     return () => unsub();
   }, []);
 
-  // Load path from Firebase on mount
+  // Load path from Firestore on mount
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "buses", "bus_1", "path"), (snap) => {
       const pathArr = snap.docs.map(doc => doc.data() as { lat: number; lng: number; timestamp: number });
@@ -135,11 +136,7 @@ const DriverDashboard = () => {
     navigate('/');
   };
 
-  const userType = localStorage.getItem('userType');
-  const storedUserInfo = localStorage.getItem('userInfo');
-  const storedRoute = localStorage.getItem('currentRoute');
-
-  // Fetch route and stops from Firebase
+  // Fetch route and stops from Firestore
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "routes", "driver_1"), (docSnap) => {
       const data = docSnap.data();
@@ -156,7 +153,6 @@ const DriverDashboard = () => {
         (pos) => {
           const { latitude, longitude } = pos.coords;
           setBusPos({ lat: latitude, lng: longitude });
-          // Always update Firebase with the latest location
           setDoc(doc(db, "buses", "bus_1"), {
             location: { latitude, longitude, timestamp: Date.now() }
           }, { merge: true });

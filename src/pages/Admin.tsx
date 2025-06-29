@@ -11,6 +11,7 @@ import GoogleMapsWrapper from "@/components/GoogleMapsWrapper";
 import { setDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+
 interface BusStop {
   id: string;
   name: string;
@@ -152,7 +153,7 @@ const Admin = () => {
       description: `Bus ${formData.busName} for ${formData.schoolName} has been added with ${stops.length} stops`
     });
 
-    // Update Firebase
+    // Update Firestore
     await setDoc(doc(db, "routes", newRoute.id), {
       driverName: newRoute.driverName,
       driverPhone: newRoute.driverPhone,

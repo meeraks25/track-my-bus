@@ -39,18 +39,17 @@ const ParentDashboard = () => {
   const [watchId, setWatchId] = useState<number | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
-  const [path, setPath] = useState([]);
+  const [path, setPath] = useState<{ lat: number; lng: number; timestamp: number }[]>([]);
+
+  const userType = localStorage.getItem('userType');
+  const storedUserInfo = localStorage.getItem('userInfo');
+  const storedRoute = localStorage.getItem('currentRoute');
 
   useEffect(() => {
-    const userType = localStorage.getItem('userType');
-    const storedUserInfo = localStorage.getItem('userInfo');
-    const storedRoute = localStorage.getItem('currentRoute');
-    
     if (!userType || userType !== 'parent' || !storedUserInfo || !storedRoute) {
       navigate('/login');
       return;
     }
-    
     setUserInfo(JSON.parse(storedUserInfo));
     setCurrentRoute(JSON.parse(storedRoute));
   }, [navigate]);
@@ -64,6 +63,7 @@ const ParentDashboard = () => {
       if (data && typeof data.isActive === 'boolean') {
         setIsActive(data.isActive);
       }
+      setLoading(false);
     });
     return () => unsub();
   }, []);
@@ -79,7 +79,7 @@ const ParentDashboard = () => {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "buses", "bus_1", "path"), (snap) => {
-      const pathArr = snap.docs.map(doc => doc.data());
+      const pathArr = snap.docs.map(doc => doc.data() as { lat: number; lng: number; timestamp: number });
       setPath(pathArr);
     });
     return () => unsub();
@@ -233,7 +233,7 @@ const ParentDashboard = () => {
                     <p className="font-medium">Current Stop</p>
                     <p className="text-sm text-gray-600">
                       {currentRoute.stops?.[busStatus.currentStop]?.name || 'Starting route'}
-                    </p>image.png
+                    </p>
                   </div>
                 </div>
                 

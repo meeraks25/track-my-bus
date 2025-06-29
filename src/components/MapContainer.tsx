@@ -5,7 +5,7 @@ import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMapEvents, Pol
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, onSnapshot, updateDoc, getDoc, collection } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, collection } from 'firebase/firestore';
 
 interface BusStop {
   id: string;
@@ -143,17 +143,15 @@ const MapContainer: React.FC<MapContainerProps> = ({
       if (driverLocation && (driverLocation.lat !== markerPos.lat || driverLocation.lng !== markerPos.lng)) {
         setMarkerPos(driverLocation);
       }
-      // eslint-disable-next-line
     }, [driverLocation]);
 
-    // Push to Firebase on dragend
+    // Push to Firestore on dragend
     const handleMarkerDragEnd = async (e: any) => {
       const { lat, lng } = e.target.getLatLng();
       setMarkerPos({ lat, lng });
       await setDoc(doc(db, "buses", "bus_1"), {
         location: { latitude: lat, longitude: lng, timestamp: Date.now() }
       }, { merge: true });
-      // Optionally, call a callback to update parent state
       if (onBusLocationUpdate) onBusLocationUpdate({ lat, lng });
     };
 
@@ -218,7 +216,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
   }
 
   if (userType === 'parent') {
-    // Live bus marker and path from Firebase
+    // Live bus marker and path from Firestore
     const [busPos, setBusPos] = useState<{ lat: number; lng: number } | null>(null);
     const [path, setPath] = useState<{ lat: number; lng: number; timestamp: number }[]>([]);
     useEffect(() => {
